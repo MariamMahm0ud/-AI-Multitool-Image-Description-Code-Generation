@@ -1,6 +1,6 @@
 # app.py
 import gradio as gr
-from utils import ModelManager
+from utils import ModelManager # Assuming this is where your heavy lifting happens
 from PIL import Image
 import torch
 import logging
@@ -17,47 +17,42 @@ logger = logging.getLogger(__name__)
 # Initialize model manager
 try:
     logger.info("Initializing ModelManager...")
+    # IMPORTANT: Optimizations like FP16, quantization, smaller model variants
+    # would typically be configured or implemented within ModelManager
     model_manager = ModelManager()
     models_loaded_successfully = True
     logger.info("ModelManager initialized successfully")
 except Exception as e:
-    logger.error(f"Failed to initialize ModelManager: {str(e)}")
+    logger.error(f"Failed to initialize ModelManager: {str(e)}", exc_info=True) # Added exc_info
     models_loaded_successfully = False
 
 def process_image_wrapper(image_pil: Optional[Image.Image], temperature: float, top_p: float, max_new_tokens: int) -> str:
-    """Wrapper for image processing to handle Gradio inputs and model interaction.
-    
-    Args:
-        image_pil: PIL Image to process
-        temperature: Sampling temperature for Qwen
-        top_p: Top-p sampling parameter for Qwen
-        max_new_tokens: Maximum tokens to generate
-        
-    Returns:
-        str: Generated description or error message
-    """
     if not models_loaded_successfully:
         return "Error: Models could not be loaded. Please check the server logs and ensure you have sufficient GPU memory."
     
     if image_pil is None:
         return "Error: Please upload an image."
     
-    # Validate image size
-    max_size = 1024  # Maximum dimension in pixels
+    max_size = 1024
     if max(image_pil.size) > max_size:
+        # Consider resizing automatically instead of erroring, or offering it as an option
+        # try:
+        #     logger.info(f"Image too large ({image_pil.size}), resizing to max dimension {max_size}...")
+        #     image_pil.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+        #     logger.info(f"Image resized to {image_pil.size}")
+        # except Exception as resize_e:
+        #     logger.error(f"Failed to resize image: {resize_e}")
+        #     return f"Error: Image is too large and could not be automatically resized. Maximum dimension should be {max_size} pixels."
         return f"Error: Image is too large. Maximum dimension should be {max_size} pixels. Please resize your image."
-    
-    # Validate image format
+
     if image_pil.mode not in ['RGB', 'L']:
         return "Error: Unsupported image format. Please upload an RGB or grayscale image."
     
     try:
-        # Generate initial caption using BLIP
         initial_caption = model_manager.generate_image_caption(image_pil)
-        if "Error generating BLIP caption" in initial_caption:
+        if "Error generating BLIP caption" in initial_caption: # Check how ModelManager signals errors
             return f"Error: Failed to generate initial caption. Details: {initial_caption}"
 
-        # Validate parameters
         if not (0 <= temperature <= 2.0):
             return "Error: Temperature must be between 0.0 and 2.0"
         if not (0 <= top_p <= 1.0):
@@ -65,7 +60,6 @@ def process_image_wrapper(image_pil: Optional[Image.Image], temperature: float, 
         if not (50 <= max_new_tokens <= 512):
             return "Error: Max New Tokens must be between 50 and 512"
 
-        # Enhance caption using Qwen
         enhanced_description = model_manager.enhance_caption(
             initial_caption,
             temperature=float(temperature),
@@ -73,40 +67,27 @@ def process_image_wrapper(image_pil: Optional[Image.Image], temperature: float, 
             max_new_tokens=int(max_new_tokens)
         )
         
-        if "Error enhancing caption" in enhanced_description:
+        if "Error enhancing caption" in enhanced_description: # Check how ModelManager signals errors
             return f"Error: Failed to enhance caption. Details: {enhanced_description}"
             
         return f"Initial Caption (BLIP):\n{initial_caption}\n\nEnhanced Description (DeepSeek-Qwen):\n{enhanced_description}"
         
     except Exception as e:
         error_msg = f"An unexpected error occurred during image processing: {str(e)}"
-        logger.error(error_msg)
-        torch.cuda.empty_cache()
+        logger.error(error_msg, exc_info=True) # Added exc_info for full traceback
+        # torch.cuda.empty_cache() # Use with caution, only if specific memory leaks are identified
         return error_msg
 
 def generate_code_from_prompt_wrapper(prompt: str, temperature: float, top_p: float, max_new_tokens: int) -> str:
-    """Wrapper for code generation.
-    
-    Args:
-        prompt: Natural language description of desired code
-        temperature: Sampling temperature for Qwen
-        top_p: Top-p sampling parameter for Qwen
-        max_new_tokens: Maximum tokens to generate
-        
-    Returns:
-        str: Generated code or error message
-    """
     if not models_loaded_successfully:
         return "Error: Models could not be loaded. Please check the server logs and ensure you have sufficient GPU memory."
     
     if not prompt or not prompt.strip():
         return "Error: Please enter a prompt for code generation."
     
-    # Validate prompt length
     if len(prompt) > 2000:
         return "Error: Prompt is too long. Maximum length is 2000 characters."
     
-    # Validate parameters
     if not (0 <= temperature <= 2.0):
         return "Error: Temperature must be between 0.0 and 2.0"
     if not (0 <= top_p <= 1.0):
@@ -122,24 +103,19 @@ def generate_code_from_prompt_wrapper(prompt: str, temperature: float, top_p: fl
             max_new_tokens=int(max_new_tokens)
         )
         
-        if "Error generating code" in code:
+        if "Error generating code" in code: # Check how ModelManager signals errors
             return f"Error: Failed to generate code. Details: {code}"
             
         return code
         
     except Exception as e:
         error_msg = f"An unexpected error occurred during code generation: {str(e)}"
-        logger.error(error_msg)
-        torch.cuda.empty_cache()
+        logger.error(error_msg, exc_info=True) # Added exc_info for full traceback
+        # torch.cuda.empty_cache() # Use with caution
         return error_msg
 
 def create_ui() -> gr.Blocks:
-    """Create and configure the Gradio interface.
-    
-    Returns:
-        gr.Blocks: Configured Gradio interface
-    """
-    with gr.Blocks(theme=gr.themes.Soft(), title="AI Multitool - Image & Code") as demo:
+    with gr.Blocks(theme=gr.themes.Soft(), title="AI Multitool - Image & Code", analytics_enabled=False) as demo:
         gr.Markdown("# 🤖 AI Multitool: Image Description & Code Generation")
         gr.Markdown("""
         This tool combines two powerful AI capabilities:
@@ -172,35 +148,13 @@ def create_ui() -> gr.Blocks:
                             height=400
                         )
                         with gr.Accordion("Advanced Parameters", open=False):
-                            img_temp = gr.Slider(
-                                minimum=0.0,
-                                maximum=2.0,
-                                value=0.7,
-                                step=0.1,
-                                label="Temperature (higher = more creative)"
-                            )
-                            img_top_p = gr.Slider(
-                                minimum=0.0,
-                                maximum=1.0,
-                                value=0.9,
-                                step=0.05,
-                                label="Top P (higher = more diverse)"
-                            )
-                            img_max_tokens = gr.Slider(
-                                minimum=50,
-                                maximum=512,
-                                value=150,
-                                step=10,
-                                label="Max New Tokens"
-                            )
+                            img_temp = gr.Slider(minimum=0.0, maximum=2.0, value=0.7, step=0.1, label="Temperature (higher = more creative)")
+                            img_top_p = gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.05, label="Top P (higher = more diverse)")
+                            img_max_tokens = gr.Slider(minimum=50, maximum=512, value=150, step=10, label="Max New Tokens")
                         img_button = gr.Button("👁️ Generate Description", variant="primary")
                     
                     with gr.Column(scale=2):
-                        img_output = gr.Textbox(
-                            label="Generated Description",
-                            lines=15,
-                            interactive=False
-                        )
+                        img_output = gr.Textbox(label="Generated Description", lines=15, interactive=False)
                 
                 img_button.click(
                     process_image_wrapper,
@@ -211,12 +165,13 @@ def create_ui() -> gr.Blocks:
                 
                 gr.Examples(
                     examples=[
-                        # Add example images here when available
+                        # ["path/to/your/example_image1.jpg", 0.7, 0.9, 150], # Provide actual paths or PIL Images
+                        # ["path/to/your/example_image2.png", 0.5, 0.95, 200],
                     ],
-                    inputs=[image_input, img_temp, img_top_p, img_max_tokens],
+                    inputs=[image_input, img_temp, img_top_p, img_max_tokens], # Ensure inputs match function signature
                     outputs=img_output,
                     fn=process_image_wrapper,
-                    cache_examples=True
+                    cache_examples="lazy" # or True; 'lazy' processes on first click
                 )
             
             # Code Generation Tab
@@ -234,42 +189,15 @@ def create_ui() -> gr.Blocks:
                 
                 with gr.Row():
                     with gr.Column(scale=1):
-                        code_input_prompt = gr.Textbox(
-                            label="Enter your code generation prompt",
-                            placeholder="e.g., Write a Python function to calculate the factorial of a number.",
-                            lines=4
-                        )
+                        code_input_prompt = gr.Textbox(label="Enter your code generation prompt", placeholder="e.g., Write a Python function to calculate the factorial of a number.", lines=4)
                         with gr.Accordion("Advanced Parameters", open=False):
-                            code_temp = gr.Slider(
-                                minimum=0.0,
-                                maximum=2.0,
-                                value=0.2,
-                                step=0.1,
-                                label="Temperature (lower = more deterministic)"
-                            )
-                            code_top_p = gr.Slider(
-                                minimum=0.0,
-                                maximum=1.0,
-                                value=0.9,
-                                step=0.05,
-                                label="Top P"
-                            )
-                            code_max_tokens = gr.Slider(
-                                minimum=50,
-                                maximum=1024,
-                                value=500,
-                                step=50,
-                                label="Max New Tokens"
-                            )
+                            code_temp = gr.Slider(minimum=0.0, maximum=2.0, value=0.2, step=0.1, label="Temperature (lower = more deterministic)")
+                            code_top_p = gr.Slider(minimum=0.0, maximum=1.0, value=0.9, step=0.05, label="Top P")
+                            code_max_tokens = gr.Slider(minimum=50, maximum=1024, value=500, step=50, label="Max New Tokens")
                         code_button = gr.Button("💡 Generate Code", variant="primary")
                     
                     with gr.Column(scale=2):
-                        code_output_display = gr.Code(
-                            label="Generated Python Code",
-                            language="python",
-                            lines=20,
-                            interactive=False
-                        )
+                        code_output_display = gr.Code(label="Generated Python Code", language="python", lines=20, interactive=False)
                 
                 code_button.click(
                     generate_code_from_prompt_wrapper,
@@ -284,10 +212,10 @@ def create_ui() -> gr.Blocks:
                         ["Write a Python script to read a CSV file named 'data.csv' and print its first 5 rows.", 0.2, 0.9, 500],
                         ["Generate a Python class 'Rectangle' with a constructor for width and height, and a method to calculate its area.", 0.3, 0.95, 500],
                     ],
-                    inputs=[code_input_prompt, code_temp, code_top_p, code_max_tokens],
+                    inputs=[code_input_prompt, code_temp, code_top_p, code_max_tokens], # Ensure inputs match function signature
                     outputs=code_output_display,
                     fn=generate_code_from_prompt_wrapper,
-                    cache_examples=True
+                    cache_examples="lazy" # or True
                 )
         
         return demo
@@ -296,20 +224,18 @@ if __name__ == "__main__":
     demo = create_ui()
     if models_loaded_successfully:
         logger.info("Launching Gradio App...")
-        # Launch with settings that work in both Colab Drive and GitHub
+        demo.queue() # Enable queue for better responsiveness with long-running tasks
         demo.launch(
-            share=True,  # Always create a public URL
-            debug=True,
-            show_error=True,
-            favicon_path=None,
-            show_api=False,
-            quiet=False,  # Changed to False to show the URL
-            server_name="0.0.0.0",
-            server_port=7860
+            share=True,         # This enables the *.gradio.live link
+            quiet=True,         # This suppresses the local URL and other verbose startup messages
+            debug=True,         # Keep for development, consider False for a cleaner "production" console
+            show_error=True,    # Good to have for debugging
+            favicon_path=None   # Add favicon path if available
         )
-        
-        # Print the public URL explicitly
-        if hasattr(demo, 'share_url'):
-            print("\nPublic URL:", demo.share_url)
+        # After launch, only the share link (if successful) and minimal messages will appear.
     else:
-        logger.error("Gradio App not launched due to model loading errors")
+        logger.error("Gradio App not launched due to model loading errors. Please check logs.")
+        # Optionally, launch a minimal UI to show the error if you want a web-based error message
+        # with gr.Blocks() as error_demo:
+        #     gr.Error("Critical Error: AI Models failed to load. The application cannot start. Please check server logs.")
+        # error_demo.launch(quiet=True)
