@@ -296,15 +296,20 @@ if __name__ == "__main__":
     demo = create_ui()
     if models_loaded_successfully:
         logger.info("Launching Gradio App...")
+        # Launch with settings that work in both Colab Drive and GitHub
         demo.launch(
-            share=True,
+            share=True,  # Always create a public URL
             debug=True,
             show_error=True,
-            favicon_path=None,  # Add favicon path if available
-            show_api=False,  # Hide API documentation
-            quiet=True,  # Hide local URL
-            server_name="0.0.0.0",  # Allow external connections
-            server_port=7860  # Default Gradio port
+            favicon_path=None,
+            show_api=False,
+            quiet=False,  # Changed to False to show the URL
+            server_name="0.0.0.0",
+            server_port=7860
         )
+        
+        # Print the public URL explicitly
+        if hasattr(demo, 'share_url'):
+            print("\nPublic URL:", demo.share_url)
     else:
         logger.error("Gradio App not launched due to model loading errors")
