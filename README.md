@@ -28,6 +28,7 @@ A Gradio-based application that combines image description and code generation c
 - 12GB+ VRAM for optimal performance
 
 ### Installation
+[Open the notebook on Google Colab](https://colab.research.google.com/drive/1fu_mFWnCUq2Gz8FBKe0BGrpWW_FqFQ8L#scrollTo=EPIv5LgA1bGm)
 
 1. Clone the repository:
 ```bash
