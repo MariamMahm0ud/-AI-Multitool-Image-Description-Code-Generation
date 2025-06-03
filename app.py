@@ -300,7 +300,9 @@ if __name__ == "__main__":
             share=True,
             debug=True,
             show_error=True,
-            favicon_path=None  # Add favicon path if available
+            favicon_path=None,  # Add favicon path if available
+            show_api=False,  # Hide API documentation
+            quiet=True  # Hide local URL
         )
     else:
         logger.error("Gradio App not launched due to model loading errors")
