@@ -27,8 +27,8 @@ A Gradio-based application that combines image description and code generation c
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/MariamMahm0ud/-AI-Multitool-Image-Description-Code-Generation
-cd -AI-Multitool-Image-Description-Code-Generation
+!git clone https://github.com/MariamMahm0ud/-AI-Multitool-Image-Description-Code-Generation
+cd './-AI-Multitool-Image-Description-Code-Generation'
 ```
 
 2. Install dependencies:
@@ -164,8 +164,8 @@ A Gradio-based application that combines image description and code generation c
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/MariamMahm0ud/-AI-Multitool-Image-Description-Code-Generation
-cd -AI-Multitool-Image-Description-Code-Generation
+!git clone https://github.com/MariamMahm0ud/-AI-Multitool-Image-Description-Code-Generation
+cd './-AI-Multitool-Image-Description-Code-Generation'
 ```
 
 2. Install dependencies:
@@ -175,7 +175,7 @@ pip install -r requirements.txt
 
 3. Run the application:
 ```bash
-python app.py
+!python app.py
 ```
 
 ## Usage Guide
