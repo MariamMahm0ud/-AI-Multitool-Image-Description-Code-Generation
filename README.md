@@ -27,8 +27,8 @@ A Gradio-based application that combines image description and code generation c
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd <repository-name>
+git clone https://github.com/MariamMahm0ud/-AI-Multitool-Image-Description-Code-Generation
+cd -AI-Multitool-Image-Description-Code-Generation
 ```
 
 2. Install dependencies:
@@ -164,8 +164,8 @@ A Gradio-based application that combines image description and code generation c
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd <repository-name>
+git clone https://github.com/MariamMahm0ud/-AI-Multitool-Image-Description-Code-Generation
+cd -AI-Multitool-Image-Description-Code-Generation
 ```
 
 2. Install dependencies:
