@@ -9,12 +9,16 @@ A Gradio-based application that combines image description and code generation c
 - Uses BLIP for initial captions
 - Enhanced by DeepSeek-Qwen for rich, detailed descriptions
 - Adjustable parameters for description style and length
+![image Description](https://github.com/MariamMahm0ud/-AI-Multitool-Image-Description-Code-Generation/blob/master/Screenshot%202025-06-04%20014226.png?raw=true)
+
 
 ### 2. Code Generation
 - Generate Python code from natural language prompts
 - Supports functions, classes, and complete scripts
 - Intelligent code extraction and cleaning
 - Adjustable parameters for code generation
+
+![Code Generation](https://github.com/MariamMahm0ud/-AI-Multitool-Image-Description-Code-Generation/blob/master/Screenshot%202025-06-04%20014124.png?raw=true)
 
 ## Setup Instructions
 
