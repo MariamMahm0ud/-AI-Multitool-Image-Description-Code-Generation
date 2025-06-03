@@ -228,9 +228,8 @@ if __name__ == "__main__":
         demo.launch(
             share=True,         # This enables the *.gradio.live link
             quiet=True,         # This suppresses the local URL and other verbose startup messages
-            debug=True,         # Keep for development, consider False for a cleaner "production" console
-            show_error=True,    # Good to have for debugging
-            favicon_path=None   # Add favicon path if available
+            debug=False,        # Disable verbose debug output
+            show_error=False,            favicon_path=None   # Add favicon path if available
         )
         # After launch, only the share link (if successful) and minimal messages will appear.
     else:
